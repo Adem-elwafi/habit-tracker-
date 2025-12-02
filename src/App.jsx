@@ -4,6 +4,7 @@ import HabitForm from './components/HabitForm'
 import HabitList from './components/HabitList'
 import CalendarGrid from './components/CalendarGrid'
 import YearView from './components/YearView'
+import DailyView from './components/DailyView'
 import Header from './components/Header'
 
 const STORAGE_KEY = 'habit-tracker:v1'
@@ -29,7 +30,7 @@ function save(state) {
 export default function App() {
   const [state, setState] = useState(() => load() || { habits: [], marks: {} })
   const [selected, setSelected] = useState(null)
-  const [mode, setMode] = useState('month') // month | year
+  const [mode, setMode] = useState('daily') // daily | month | year
   const [viewDate, setViewDate] = useState(() => new Date())
 
   useEffect(() => save(state), [state])
@@ -71,6 +72,17 @@ export default function App() {
     })
   }
 
+  function toggleDailyTask(habitId, key) {
+    setState((s) => {
+      const marks = { ...s.marks }
+      const day = marks[key] ? { ...marks[key] } : {}
+      if (day[habitId]) delete day[habitId]
+      else day[habitId] = true
+      marks[key] = Object.keys(day).length ? day : undefined
+      return { ...s, marks }
+    })
+  }
+
   function prevMonth() {
     setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
   }
@@ -105,18 +117,25 @@ export default function App() {
       </div>
 
       <div className="view-toggle">
+        <button type="button" onClick={() => setMode('daily')} aria-pressed={mode==='daily'} className={mode==='daily'? 'active':''}>Daily</button>
         <button type="button" onClick={() => setMode('month')} aria-pressed={mode==='month'} className={mode==='month'? 'active':''}>Month</button>
         <button type="button" onClick={() => setMode('year')} aria-pressed={mode==='year'} className={mode==='year'? 'active':''}>Year</button>
       </div>
 
       <div className="content">
-        {!selected && <div className="muted">Select a habit to start tracking</div>}
-        {selected && <div className="tracking-info">Tracking: <strong>{(habits.find(h=>h.id===selected)||{}).name}</strong></div>}
-
-        {mode === 'month' ? (
-          <CalendarGrid date={viewDate} marks={marksForCurrent} onToggleDay={toggleDay} onPrevMonth={prevMonth} onNextMonth={nextMonth} />
+        {mode === 'daily' ? (
+          <DailyView habits={habits} marks={state.marks} onToggle={toggleDailyTask} />
         ) : (
-          <YearView year={viewDate.getFullYear()} marks={marksForCurrent} onToggle={toggleDay} />
+          <>
+            {!selected && <div className="muted">Select a habit to start tracking</div>}
+            {selected && <div className="tracking-info">Tracking: <strong>{(habits.find(h=>h.id===selected)||{}).name}</strong></div>}
+
+            {mode === 'month' ? (
+              <CalendarGrid date={viewDate} marks={marksForCurrent} onToggleDay={toggleDay} onPrevMonth={prevMonth} onNextMonth={nextMonth} />
+            ) : (
+              <YearView year={viewDate.getFullYear()} marks={marksForCurrent} onToggle={toggleDay} />
+            )}
+          </>
         )}
       </div>
 
