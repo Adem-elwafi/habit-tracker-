@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "description": "A lightweight habit tracker built with React + Vite",
   "type": "module",
+  "homepage": ".",
   "scripts": {
     "dev": "vite",
     "start": "vite",
